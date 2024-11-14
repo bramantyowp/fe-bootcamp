@@ -10,7 +10,10 @@ const initialState = {
 const carSlice = createSlice({
   name: 'cars',
   initialState,
-  reducers: {},
+  reducers: {
+    resetState: (state) => initialState,
+  },
+
   extraReducers: (builder) => {
     builder
       .addCase(getData.pending, (state) => {
@@ -28,3 +31,4 @@ const carSlice = createSlice({
 });
 
 export default carSlice.reducer;
+export const {resetState} = carSlice.actions; // Untuk mengexport reducer dan actionnya

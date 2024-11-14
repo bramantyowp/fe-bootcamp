@@ -16,7 +16,8 @@ import { Row, Col } from '../components/Grid';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { formatCurrency } from '../utils/formatCurrency';
-
+import { useDispatch } from 'react-redux';
+import { resetState } from '../redux/reducers/cars';
 const md = `## Include
   
   - Apa saja yang termasuk dalam paket misal durasi max 12 jam
@@ -33,14 +34,14 @@ const md = `## Include
 export default function Detail({ route }) {
     const navigation = useNavigation();
     const { id } = route.params;
-
+    const dispatch = useDispatch();
     const [isLoading, setIsLoading] = useState(true);
     const [data, setData] = useState();
 
     useEffect(() => {
         const getDetail = async () => {
             try {
-                const res = await axios(`https://ugly-baboon-brambt8ihpod-c5531254.koyeb.app/api/v1/cars/${id}`)
+                const res = await axios(`https://ugly-baboon-brambt8ihpod-c5531254.koyeb.app/api/v1/cars/${id}`);
                 setData(res.data.data);
                 setIsLoading(false);
                 console.log(res.data.data);
@@ -89,7 +90,12 @@ export default function Detail({ route }) {
                 <Button
                     color="#3D7B3F"
                     title="Lanjutkan Pembayaran"
-                    onPress={() => navigation.navigate('Payment')}
+                    onPress={() =>{
+                        navigation.navigate('Payment', {id});
+                        dispatch(resetState());
+                    }
+                    }
+
                 />
             </View>
         </View>

@@ -3,14 +3,10 @@ import axios from 'axios';
 
 export const getData = createAsyncThunk(
   'cars/getData', // Action type untuk Redux
-  async (_, { rejectWithValue }) => { // Gunakan _ karena parameter pertama tidak dibutuhkan
+  async (id, { rejectWithValue }) => { // Gunakan _ karena parameter pertama tidak dibutuhkan
     try {
-        const res = await axios.get('https://ugly-baboon-brambt8ihpod-c5531254.koyeb.app/api/v1/cars', {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-          console.log('API Response:', res.data);
+        const res = await axios.get(`https://ugly-baboon-brambt8ihpod-c5531254.koyeb.app/api/v1/cars/${id}`);
+          console.log('API Response:' ,res.data);
       const { data } = res.data;
       return data; // Mengembalikan data mobil dari API
     } catch (e) {

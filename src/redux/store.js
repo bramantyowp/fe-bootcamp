@@ -9,21 +9,13 @@ const persistConfig = {
   storage: AsyncStorage,
 };
 
-const persistedReducer = persistReducer(persistConfig, rootReducer);
-
 export const store = configureStore({
-  reducer: persistedReducer,
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: {
-        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'], // Mengabaikan aksi redux-persist untuk serializability check
-      },
-    }),
+  reducer: persistReducer(persistConfig, rootReducer),
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
   enhancers: (getDefaultEnhancers) =>
-    __DEV__
-      ? getDefaultEnhancers().concat(reactotron.createEnhancer())
-      : getDefaultEnhancers(),
-  devTools: __DEV__, // Hanya aktifkan devTools di mode pengembangan
+    __DEV__ ? getDefaultEnhancers()
+      .concat(reactotron.createEnhancer()) : getDefaultEnhancers(),
+  devTools: true,
 });
 
 export const persistor = persistStore(store);

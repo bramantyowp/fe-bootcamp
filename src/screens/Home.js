@@ -1,10 +1,3 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import { useState, useEffect, useCallback } from 'react';
 import {
   FlatList,
@@ -16,8 +9,8 @@ import {
   View,
 } from 'react-native';
 
-import axios from 'axios';
-
+import { useDispatch, useSelector } from 'react-redux'; // Menggunakan Redux
+import { getAllCars } from '../redux/reducers/cars'; // Import action getAllCars
 import Button from '../components/Button';
 import Icon from 'react-native-vector-icons/Feather';
 import CarList from '../components/CarList';
@@ -29,8 +22,8 @@ const COLORS = {
   primary: '#A43333',
   secondary: '#5CB85F',
   darker: '#121212',
-  lighter: '#ffffff'
-}
+  lighter: '#ffffff',
+};
 
 const ButtonIcon = ({ icon, title }) => (
   <Button>
@@ -39,52 +32,57 @@ const ButtonIcon = ({ icon, title }) => (
     </View>
     <Text style={styles.iconText}>{title}</Text>
   </Button>
-)
+);
 
 function Home() {
   const navigation = useNavigation();
-  const [cars, setCars] = useState([])
-  const [user, setUser] = useState(null)
+  const dispatch = useDispatch();
+  const { cars, status, message } = useSelector((state) => state.cars); // Mengambil data dari Redux store
+  const [user, setUser] = useState(null);
   const isDarkMode = useColorScheme() === 'dark';
 
+  // Mengambil data user dari AsyncStorage
   const getUser = async () => {
     try {
-      const res = await AsyncStorage.getItem('user')
+      const res = await AsyncStorage.getItem('user');
       setUser(JSON.parse(res));
       console.log(res);
     } catch (e) {
       console.log(e);
       setUser(null);
     }
-  }
+  };
 
-  const fetchCars = async () => {
-    try {
-      const res = await axios('https://ugly-baboon-brambt8ihpod-c5531254.koyeb.app/api/v1/cars')
-      console.log(res.data)
-      setCars(res.data)
-    } catch (e) {
-      console.log(e)
-    }
-  }
-
+  // Mengambil data mobil hanya jika data belum ada di Redux
   useEffect(() => {
-    fetchCars()
-  }, [])
+    if (!cars || cars.length === 0) {
+      dispatch(getAllCars()); // Dispatch action untuk mengambil data mobil
+    }
+  }, [dispatch, cars]);
 
+  // Menggunakan useFocusEffect untuk mengambil data user dan menjaga data
   useFocusEffect(
     useCallback(() => {
-      getUser()
+      getUser();
       return () => {
-        setUser(null)
+        setUser(null); // Clear user data when screen is unfocused
       };
     }, [])
-  )
+  );
 
   const backgroundStyle = {
-    // overflow: 'visible',
     backgroundColor: isDarkMode ? COLORS.darker : COLORS.lighter,
   };
+
+  // Jika status loading, tampilkan loading spinner
+  if (status === 'loading') {
+    return <Text>Loading...</Text>;
+  }
+
+  // Jika status gagal, tampilkan pesan error
+  if (status === 'failed') {
+    return <Text>Error: {message}</Text>;
+  }
 
   return (
     <SafeAreaView style={backgroundStyle}>
@@ -92,9 +90,8 @@ function Home() {
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor={COLORS.primary}
       />
-      {/* end banner */}
       <FlatList
-        data={cars.data}
+        data={cars} // Data diambil dari Redux store
         ListHeaderComponent={
           <>
             <View style={styles.header}>
@@ -103,24 +100,26 @@ function Home() {
                   <Text style={styles.headerText}>Hi, {user ? user.fullname : 'Guest'}</Text>
                   <Text style={styles.headerTextLocation}>Your Location</Text>
                 </View>
-                <View >
-                  <Image style={styles.imageRounded} source={{ uri: "https://i.pravatar.cc/100" }} width={50} height={50} />
-                </View>
-              </View>
-              {/* banner */}
-              <View style={{
-                ...styles.headerContainer,
-                ...styles.bannerContainer
-              }}>
-                <View style={styles.bannerDesc}>
-                  <Text style={styles.bannerText}>Sewa Mobil Berkualitas di kawasanmu</Text>
-                  <Button
-                    color={COLORS.secondary}
-                    title='Sewa Mobil'
+                <View>
+                  <Image
+                    style={styles.imageRounded}
+                    source={{ uri: 'https://i.pravatar.cc/100' }}
+                    width={50}
+                    height={50}
                   />
                 </View>
+              </View>
+              <View style={{ ...styles.headerContainer, ...styles.bannerContainer }}>
+                <View style={styles.bannerDesc}>
+                  <Text style={styles.bannerText}>Sewa Mobil Berkualitas di kawasanmu</Text>
+                  <Button color={COLORS.secondary} title="Sewa Mobil" />
+                </View>
                 <View style={styles.bannerImage}>
-                  <Image source={require('../assets/images/img_car.png')} width={50} height={50} />
+                  <Image
+                    source={require('../assets/images/img_car.png')}
+                    width={50}
+                    height={50}
+                  />
                 </View>
               </View>
             </View>
@@ -132,7 +131,7 @@ function Home() {
             </View>
           </>
         }
-        renderItem={({ item, index }) =>
+        renderItem={({ item, index }) => (
           <CarList
             key={item.id}
             image={{ uri: item.img }}
@@ -140,10 +139,10 @@ function Home() {
             passengers={5}
             baggage={4}
             price={item.price}
-            onPress={() => navigation.navigate('Detail', {id: item.id})}
+            onPress={() => navigation.navigate('Detail', { id: item.id, data: item })}
           />
-        }
-        keyExtractor={item => item.id}
+        )}
+        keyExtractor={(item) => item.id}
       />
     </SafeAreaView>
   );
@@ -159,7 +158,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between', // posisi horizontal
     alignItems: 'center', // posisi
-    padding: 10
+    padding: 10,
   },
   imageRounded: {
     borderRadius: 40,
@@ -167,12 +166,12 @@ const styles = StyleSheet.create({
   headerText: {
     color: COLORS.lighter,
     fontWeight: 700,
-    fontSize: 12
+    fontSize: 12,
   },
   headerTextLocation: {
     color: COLORS.lighter,
     fontWeight: 700,
-    fontSize: 14
+    fontSize: 14,
   },
   bannerContainer: {
     borderRadius: 4,
@@ -180,7 +179,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#AF392F',
     marginHorizontal: 10,
     flexWrap: 'wrap',
-    marginBottom: -200
+    marginBottom: -200,
   },
   bannerText: {
     fontSize: 16,
@@ -189,18 +188,18 @@ const styles = StyleSheet.create({
   },
   bannerDesc: {
     paddingHorizontal: 10,
-    width: '40%'
+    width: '40%',
   },
   iconContainer: {
     marginTop: 75,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap',
   },
   iconWrapper: {
     backgroundColor: COLORS.primary,
     borderRadius: 5,
-    padding: 15
+    padding: 15,
   },
   iconText: {
     color: '#fff',
@@ -208,8 +207,8 @@ const styles = StyleSheet.create({
     fontWeight: 700,
     minWidth: 65,
     marginTop: 5,
-    textAlign: 'center'
-  }
+    textAlign: 'center',
+  },
 });
 
 export default Home;

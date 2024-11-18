@@ -1,110 +1,96 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ActivityIndicator, Image, Button } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import { getData } from '../redux/reducers/cars/api'; // Ensure path is correct
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
-import { Row, Col } from '../components/Grid';
+import { Row, Col } from '../components/Grid'; // Assuming Row/Col is a custom layout component
+
 const PaymentScreen = ({ route }) => {
-  const dispatch = useDispatch();
-  const { data, status } = useSelector((state) => state.cars); // Access state from Redux
-  const { id } = route.params;
+  const { data } = route.params; // Destructure directly to avoid unnecessary variables
   const [selectedBank, setSelectedBank] = useState(null);
   const [promoCode, setPromoCode] = useState('');
   const [totalAmount, setTotalAmount] = useState(0);
   const [originalAmount, setOriginalAmount] = useState(0);
+  const [currentStep, setCurrentStep] = useState(1);
   const navigation = useNavigation();
 
+  // Set up the initial amount based on the incoming data
   useEffect(() => {
-    if (!data && id) {
-      dispatch(getData(id));
-    }
-  }, [dispatch, data, id]);
-
-  useEffect(() => {
-    if (data && data.id === id) {
+    if (data) {
       setOriginalAmount(data.price);
       setTotalAmount(data.price);
     } else {
       Alert.alert('Data mobil tidak ditemukan');
     }
-  }, [data, id]);
+  }, [data]); // Only run this effect when 'data' changes
 
+  // Function to handle promo code application
   const applyPromo = () => {
     let discount = 0;
-
     if (promoCode === 'DISKON50') {
       discount = 50000;
-      Alert.alert('Kode promo diterapkan!');
+      Alert.alert('Kode promo DISKON50 diterapkan!');
     } else if (promoCode === 'DISKON20') {
       discount = 23000;
       Alert.alert('Kode promo DISKON20 diterapkan!');
     } else {
       Alert.alert('Kode promo tidak valid!');
     }
-
     setTotalAmount(originalAmount - discount);
   };
 
-  const makePayment = () => {
-    if (!selectedBank) {
-      Alert.alert('Silakan pilih metode transfer');
-      return;
+  // Function to move to the next step
+  const handleNextStep = () => {
+    if (currentStep === 1 && selectedBank) {
+      setCurrentStep(2); // Move to the next step if bank is selected
+    } else if (currentStep === 2) {
+      setCurrentStep(3); // Move to the final step
     }
-
-    Alert.alert(`Pembayaran berhasil dengan ${selectedBank} transfer.`);
   };
 
-  if (status === 'loading') {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#00A000" />
-        <Text style={styles.loadingText}>Memuat detail mobil...</Text>
-      </View>
-    );
+  // If no car data, show loading indicator
+  if (!data) {
+    return <ActivityIndicator size="large" color="#00A000" />;
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon size={32} name="arrow-left" color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Pembayaran</Text>
-      </View>
-
+      {/* Progress Stepper at the Top */}
       <View style={styles.steps}>
-        <Text style={styles.stepActive}>Pilih Metode</Text>
-        <Text style={styles.step}>Bayar</Text>
-        <Text style={styles.step}>Tiket</Text>
+        <View style={[styles.stepWrapper, currentStep >= 1 && styles.stepActive]}>
+          <Text style={[styles.stepText, currentStep >= 1 && styles.stepActiveText]}>Pilih Metode</Text>
+        </View>
+        <View style={[styles.stepWrapper, currentStep >= 2 && styles.stepActive]}>
+          <Text style={[styles.stepText, currentStep >= 2 && styles.stepActiveText]}>Bayar</Text>
+        </View>
+        <View style={[styles.stepWrapper, currentStep >= 3 && styles.stepActive]}>
+          <Text style={[styles.stepText, currentStep >= 3 && styles.stepActiveText]}>Tiket</Text>
+        </View>
       </View>
 
+      {/* Car Details Section */}
       <View style={styles.item}>
-        {data ? (
-          <>
-            <Image source={{ uri: data.img }} style={styles.carImage} />
-            <View style={styles.carInfo}>
-              <Text style={styles.carName}>{data.name}</Text>
-              <Row style={styles.iconWrapper} gap={5}>
-                        <Col style={styles.textIcon}>
-                            <Icon size={14} name={'users'} color={'#8A8A8A'} />
-                            <Text style={styles.capacityText}>{data.seat}</Text>
-                        </Col>
-                        <Col style={styles.textIcon}>
-                            <Icon size={14} name={'briefcase'} color={'#8A8A8A'} />
-                            <Text style={styles.capacityText}>{data.baggage}</Text>
-                        </Col>
-                    </Row>
-              <Text style={styles.amount}>Rp {data.price.toLocaleString('id-ID')}</Text>
-            </View>
-          </>
-        ) : (
-          <Text>Loading car details...</Text>
-        )}
+        <Image source={{ uri: data.img }} style={styles.carImage} />
+        <View style={styles.carInfo}>
+          <Text style={styles.carName}>{data.name}</Text>
+          <Row style={styles.iconWrapper} gap={5}>
+            <Col style={styles.textIcon}>
+              <Icon size={14} name="users" color="#8A8A8A" />
+              <Text style={styles.capacityText}>{data.seat}</Text>
+            </Col>
+            <Col style={styles.textIcon}>
+              <Icon size={14} name="briefcase" color="#8A8A8A" />
+              <Text style={styles.capacityText}>{data.baggage}</Text>
+            </Col>
+          </Row>
+          <Text style={styles.amount}>Rp {data.price.toLocaleString('id-ID')}</Text>
+        </View>
       </View>
 
+      {/* Select Bank Transfer */}
       <Text style={styles.sectionTitle}>Pilih Bank Transfer</Text>
-      <Text style={styles.sectionDescription}>Kamu bisa membayar dengan transfer melalui ATM, Internet Banking atau Mobile Banking</Text>
+      <Text style={styles.sectionDescription}>
+        Kamu bisa membayar dengan transfer melalui ATM, Internet Banking atau Mobile Banking.
+      </Text>
       <View style={styles.bankOptions}>
         {['BCA', 'BNI', 'Mandiri'].map((bank) => (
           <TouchableOpacity
@@ -118,6 +104,7 @@ const PaymentScreen = ({ route }) => {
         ))}
       </View>
 
+      {/* Promo Code Section */}
       <View style={styles.promo}>
         <Text style={styles.promoLabel}>Pakai Kode Promo</Text>
         <View style={styles.promoInputContainer}>
@@ -133,12 +120,28 @@ const PaymentScreen = ({ route }) => {
         </View>
       </View>
 
+      {/* Payment Button and Total Amount */}
       <View style={styles.footerContainer}>
         <View style={styles.totalContainer}>
           <Text style={styles.total}>Rp {totalAmount.toLocaleString('id-ID')}</Text>
         </View>
 
-        <TouchableOpacity style={styles.payButton} onPress={makePayment}>
+        <TouchableOpacity
+          style={[styles.payButton, !selectedBank && styles.disabledPayButton]}
+          onPress={() => {
+            if (!selectedBank) {
+              Alert.alert('Silakan pilih metode transfer terlebih dahulu.');
+            } else {
+              navigation.navigate('OrderDetail', {
+                id: data.id,
+                data,
+                totalAmount,
+                selectedBank, // Pass selectedBank here
+              });
+            }
+          }}
+          disabled={!selectedBank}
+        >
           <Text style={styles.payButtonText}>Bayar</Text>
         </TouchableOpacity>
       </View>
@@ -146,21 +149,32 @@ const PaymentScreen = ({ route }) => {
   );
 };
 
+
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#F5F5F5' },
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  backButton: { padding: 5, marginRight: 10 },
-  title: { fontSize: 24, fontWeight: 'bold' },
   steps: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
-  step: { color: '#A0A0A0' },
-  stepActive: { color: '#00A000', fontWeight: 'bold' },
+  stepWrapper: {
+    alignItems: 'center',
+    flex: 1,
+    paddingVertical: 10,
+  },
+  stepText: {
+    fontSize: 16,
+    color: '#A0A0A0', // Inactive steps color
+  },
+  stepActive: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#00A000', // Active step underline color
+  },
+  stepActiveText: {
+    color: '#00A000', // Active step text color
+    fontWeight: 'bold',
+  },
   item: { flexDirection: 'row', backgroundColor: '#FFF', padding: 15, borderRadius: 10, marginBottom: 20, alignItems: 'center' },
   carImage: { width: 80, height: 50, marginRight: 15, borderRadius: 5 },
   carInfo: { flex: 1 },
   carName: { fontWeight: 'bold', fontSize: 16 },
-  carDetails: { flexDirection: 'row', marginTop: 5 },
-  carDetail: { marginRight: 10, color: '#A0A0A0' },
-  icon: { marginRight: 5 },
+  capacityText: { fontSize: 14, color: '#A0A0A0' },
   amount: { color: 'green', fontWeight: 'bold', marginTop: 5 },
   sectionTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 10 },
   sectionDescription: { color: '#A0A0A0', marginBottom: 20 },
@@ -198,24 +212,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   applyButtonText: { color: '#FFF', fontSize: 14 },
-  footerContainer: { paddingVertical: 20, borderTopWidth: 1, borderTopColor: '#E0E0E0' },
+  footerContainer: { paddingVertical: 30, borderTopWidth: 1, borderTopColor: '#E0E0E0' },
   totalContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   total: { fontSize: 20, fontWeight: 'bold' },
-  expandIcon: { fontSize: 20, color: '#A0A0A0' },
   payButton: {
     backgroundColor: '#00A000',
-    padding: 8,
+    padding: 12,
     borderRadius: 5,
     alignItems: 'center',
   },
   payButtonText: { color: '#FFF', fontSize: 18 },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
+  disabledPayButton: {
+    backgroundColor: '#D0D0D0', // Grey color when the button is disabled
   },
-  loadingText: { marginTop: 10, fontSize: 16 },
 });
 
 export default PaymentScreen;

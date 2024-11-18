@@ -1,8 +1,8 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { getData } from './api';
+import { getAllCars } from './api'; // Gunakan action getAllCars yang mengambil semua mobil
 
 const initialState = {
-  data: null, // data yang akan diisi dengan hasil fetch API
+  cars: [], // Menggunakan array untuk menyimpan data mobil
   status: 'idle', // Status: 'idle', 'loading', 'success', 'failed'
   message: null, // Pesan error jika ada
 };
@@ -11,19 +11,26 @@ const carSlice = createSlice({
   name: 'cars',
   initialState,
   reducers: {
-    resetState: (state) => initialState,
+    resetState: (state) => {
+      state.cars = [];
+      state.status = 'idle';
+      state.message = null;
+    },
   },
 
   extraReducers: (builder) => {
     builder
-      .addCase(getData.pending, (state) => {
+      // Menangani status loading
+      .addCase(getAllCars.pending, (state) => {
         state.status = 'loading';
       })
-      .addCase(getData.fulfilled, (state, action) => {
+      // Menangani jika API berhasil
+      .addCase(getAllCars.fulfilled, (state, action) => {
         state.status = 'success';
-        state.data = action.payload; // Pastikan ini sesuai dengan data yang dikembalikan oleh API
+        state.cars = action.payload; // Simpan data mobil yang didapat dari API
       })
-      .addCase(getData.rejected, (state, action) => {
+      // Menangani jika API gagal
+      .addCase(getAllCars.rejected, (state, action) => {
         state.status = 'failed';
         state.message = action.payload; // Menyimpan pesan error jika ada
       });
@@ -31,4 +38,5 @@ const carSlice = createSlice({
 });
 
 export default carSlice.reducer;
-export const {resetState} = carSlice.actions; // Untuk mengexport reducer dan actionnya
+export const { resetState } = carSlice.actions;
+export {getAllCars};

@@ -15,6 +15,8 @@ import SignIn from './src/screens/SignIn';
 import SignUp from './src/screens/SignUp';
 import Detail from './src/screens/Detail';
 import PaymentScreen from './src/screens/PaymentScreen'; // Import PaymentScreen here
+import OrderDetailScreen from './src/screens/orderDetail';
+import PaymentProofUpload from './src/screens/confirm';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -25,7 +27,9 @@ function Tabs() {
       <Tab.Screen
         options={{
           headerShown: false,
-          tabBarIcon: () => <Icon name={"home"} size={25} color="#A43333" />
+          tabBarIcon: ({ focused }) => (
+            <Icon name={"home"} size={25} color={focused ? "#A43333" : "#B0B0B0"} />
+          ),
         }}
         name="Home"
         component={Home}
@@ -33,7 +37,9 @@ function Tabs() {
       <Tab.Screen
         options={{
           title: 'Daftar Mobil',
-          tabBarIcon: () => <Icon name={"list"} size={25} color="#A43333" />
+          tabBarIcon: ({ focused }) => (
+            <Icon name={"list"} size={25} color={focused ? "#A43333" : "#B0B0B0"} />
+          ),
         }}
         name="List"
         component={List}
@@ -41,7 +47,9 @@ function Tabs() {
       <Tab.Screen
         options={{
           title: 'Akun',
-          tabBarIcon: () => <Icon name={"user"} size={25} color="#A43333" />
+          tabBarIcon: ({ focused }) => (
+            <Icon name={"user"} size={25} color={focused ? "#A43333" : "#B0B0B0"} />
+          ),
         }}
         name="Profile"
         component={Akun}
@@ -58,28 +66,28 @@ function App() {
           <Stack.Navigator>
             <Stack.Screen
               options={{
-                headerShown: false
+                headerShown: false,
               }}
               name="HomeTabs"
               component={Tabs}
             />
             <Stack.Screen
               options={{
-                headerShown: false
+                headerShown: false,
               }}
               name="SignIn"
               component={SignIn}
             />
             <Stack.Screen
               options={{
-                headerShown: false
+                headerShown: false,
               }}
               name="SignUp"
               component={SignUp}
             />
             <Stack.Screen
               options={{
-                headerShown: false
+                headerShown: false,
               }}
               name="Detail"
               component={Detail}
@@ -87,10 +95,26 @@ function App() {
             <Stack.Screen
               options={{
                 headerShown: true,
-                title: 'Pembayaran' // Optional: Set a title for the PaymentScreen header
+                title: 'Pembayaran',// Optional: Set a title for the PaymentScreen header
               }}
               name="Payment"
               component={PaymentScreen} // Add PaymentScreen here
+            />
+            <Stack.Screen
+              options={{
+                headerShown: true,
+                title: 'Pembayaran' ,// Optional: Set a title for the PaymentScreen header
+              }}
+              name="OrderDetail"
+              component={OrderDetailScreen} // Add PaymentScreen here
+            />
+            <Stack.Screen
+              options={{
+                headerShown: true,
+                title: 'Confirm The Order' ,// Optional: Set a title for the PaymentScreen header
+              }}
+              name="Confirm"
+              component={PaymentProofUpload} // Add PaymentScreen here
             />
           </Stack.Navigator>
         </NavigationContainer>

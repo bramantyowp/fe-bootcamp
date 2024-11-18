@@ -1,49 +1,46 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import { useState, useEffect } from 'react';
 import {
     FlatList,
     SafeAreaView,
     useColorScheme,
+    Text,
 } from 'react-native';
-
-import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux'; // Import dari Redux
+import { getAllCars } from '../redux/reducers/cars'; // Import action getAllCars
 import CarList from '../components/CarList';
 import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import { useNavigation } from '@react-navigation/native';
+
 const COLORS = {
     primary: '#A43333',
     secondary: '#5CB85F',
     darker: '#121212',
-    lighter: '#ffffff'
-}
+    lighter: '#ffffff',
+};
 
 function List() {
-    const [cars, setCars] = useState([])
-    const isDarkMode = useColorScheme() === 'dark';
+    const dispatch = useDispatch();
     const navigation = useNavigation();
+    const { cars, status, message } = useSelector((state) => state.cars); // Ambil data dari Redux
+    const isDarkMode = useColorScheme() === 'dark';
+
     useEffect(() => {
-        const fetchCars = async () => {
-            try {
-                const res = await axios('https://ugly-baboon-brambt8ihpod-c5531254.koyeb.app/api/v1/cars')
-                console.log(res.data)
-                setCars(res.data)
-            } catch (e) {
-                console.log(e)
-            }
-        }
-        fetchCars()
-    }, [])
+        dispatch(getAllCars()); // Dispatch untuk ambil data mobil dari Redux
+    }, [dispatch]);
 
     const backgroundStyle = {
-        // overflow: 'visible',
         backgroundColor: isDarkMode ? COLORS.darker : COLORS.lighter,
     };
+
+    // Jika status loading, tampilkan loading spinner
+    if (status === 'loading') {
+        return <Text>Loading...</Text>;
+    }
+
+    // Jika status gagal, tampilkan pesan error
+    if (status === 'failed') {
+        return <Text>Error: {message}</Text>;
+    }
 
     return (
         <SafeAreaView style={backgroundStyle}>
@@ -51,21 +48,25 @@ function List() {
                 barStyle={isDarkMode ? 'light-content' : 'dark-content'}
                 backgroundColor={COLORS.lighter}
             />
-            {/* end banner */}
             <FlatList
-                data={cars.data}
-                renderItem={({ item, index }) =>
+                data={cars} // Gunakan data dari Redux
+                renderItem={({ item }) => (
                     <CarList
                         key={item.id}
                         image={{ uri: item.img }}
                         carName={item.name}
-                        passengers={5}
-                        baggage={4}
+                        passengers={item.seat}
+                        baggage={item.baggage}
                         price={item.price}
-                        onPress={() => navigation.navigate('Detail', {id: item.id})}
+                        onPress={() =>
+                            navigation.navigate('Detail', {
+                                id: item.id, // Kirim id
+                                data: item,   // Kirim seluruh data item mobil
+                            })
+                        }
                     />
-                }
-                keyExtractor={item => item.id}
+                )}
+                keyExtractor={item => item.id.toString()}
             />
         </SafeAreaView>
     );

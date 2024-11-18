@@ -40,5 +40,5 @@ export default function Akun() {
                     </View>
             }
         </View>
-    );
+    )
 }
